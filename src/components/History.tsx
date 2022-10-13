@@ -14,7 +14,7 @@ export const History: React.FC<HistoryProps> = ({ item }) => {
   return (
     <div
       onClick={onDeleteHandler}
-      className={`history flex justify-between mt-4 bg-white p-2 shadow-xl border-r-[5px] ${
+      className={`history flex justify-between mt-4 bg-white p-2 shadow-xl border-r-[5px] cursor-pointer ${
         item.amount < 0 ? "border-red-600" : "border-green-500"
       }`}
     >
