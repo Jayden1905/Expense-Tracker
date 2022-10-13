@@ -31,7 +31,10 @@ export function useExpenseContext() {
 export default function ExpenseContextProvider({
   children,
 }: ExpenseContextProviderProps): JSX.Element {
-  const [movements, setMovementState] = useState<number[]>([]);
+  const [movements, setMovementState] = useLocalStorage<number[]>(
+    "movements",
+    []
+  );
 
   const [history, setHistory] = useLocalStorage<HistoryProps[]>("history", []);
 
@@ -57,10 +60,10 @@ export default function ExpenseContextProvider({
     setHistory((curr) => curr.filter((item) => item.id !== id));
 
     const currentIndex = movements.indexOf(amount);
-    movements.splice(currentIndex, 1);
+    setMovementState((prev) =>
+      prev.filter((_, index) => index !== currentIndex)
+    );
   };
-
-  // movements.splice(0);
 
   console.log(movements);
 
