@@ -1,19 +1,25 @@
 import { createContext, ReactNode, useContext, useState } from "react";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 type ExpenseContextProviderProps = {
   children: ReactNode;
 };
 
 type ExpenseContextProps = {
-  getBalance: () => number;
-  increaseBalance: (amount: number) => void;
-  deecreaseBalance: (amount: number) => void;
-  getIncome: () => string;
-  setIncome: (amont: number) => void;
-  getExpense: () => string;
-  setExpense: (amount: number) => void;
-  getDescription: () => string;
-  setDescription: (text: string) => void;
+  getMovements: () => number[];
+  setMovements: (amount: number) => void;
+  balance: () => number;
+  getIncome: () => number;
+  getExpense: () => number;
+  addHistory: (id: string, amount: number, description: string) => void;
+  deleteHistory: (id: string, amount: number) => void;
+  history: HistoryProps[];
+};
+
+type HistoryProps = {
+  id: string;
+  amount: number;
+  description: string;
 };
 
 const ExpenseContext = createContext({} as ExpenseContextProps);
@@ -24,68 +30,73 @@ export function useExpenseContext() {
 
 export default function ExpenseContextProvider({
   children,
-}: ExpenseContextProviderProps) {
-  const [balance, setBalance] = useState(0);
-  const [income, setIncomeState] = useState(0);
-  const [expense, setExpenseState] = useState(0);
-  const [description, setDescriptionState] = useState("");
+}: ExpenseContextProviderProps): JSX.Element {
+  const [movements, setMovementState] = useState<number[]>([]);
 
-  // Set Methods
-  const increaseBalance = (amount: number) => {
-    setBalance((prev) => prev + amount);
+  const [history, setHistory] = useLocalStorage<HistoryProps[]>("history", []);
+
+  const setMovements = (amount: number) =>
+    setMovementState((prev) => [...prev, amount]);
+
+  const getMovements = () => movements;
+
+  const addHistory = (id: string, amount: number, description: string) => {
+    setHistory((curr) => {
+      return [
+        ...curr,
+        {
+          id: id,
+          amount: amount,
+          description: description,
+        },
+      ];
+    });
   };
 
-  const deecreaseBalance = (amount: number) => {
-    setBalance((prev) => prev - amount);
+  const deleteHistory = (id: string, amount: number) => {
+    setHistory((curr) => curr.filter((item) => item.id !== id));
+
+    const currentIndex = movements.indexOf(amount);
+    movements.splice(currentIndex, 1);
   };
 
-  const setIncome = (amount: number) => {
-    setIncomeState((prev) => prev + amount);
-    increaseBalance(amount);
-  };
+  // movements.splice(0);
 
-  const setExpense = (amount: number) => {
-    setExpenseState((prev) => prev + amount);
-    deecreaseBalance(amount);
-  };
+  console.log(movements);
 
-  const setDescription = (text: string) => {
-    setDescriptionState(text);
+  const balance = () => {
+    return movements.reduce((prev, curr) => {
+      return prev + curr;
+    }, 0);
   };
-
-  // Get Methods
-  const getBalance = () => balance;
 
   const getIncome = () => {
-    if (Number.isInteger(income)) {
-      return `${income}.00`;
-    } else {
-      return `${income}`;
-    }
+    const income = movements.filter((number) => number > 0);
+
+    return income.reduce((prev, curr) => {
+      return prev + curr;
+    }, 0);
   };
 
   const getExpense = () => {
-    if (Number.isInteger(expense)) {
-      return `${expense}.00`;
-    } else {
-      return `${expense}`;
-    }
-  };
+    const expense = movements.filter((number) => number < 0);
 
-  const getDescription = () => description;
+    return expense.reduce((prev, curr) => {
+      return prev + curr;
+    }, 0);
+  };
 
   return (
     <ExpenseContext.Provider
       value={{
-        getBalance,
-        increaseBalance,
-        deecreaseBalance,
+        getMovements,
+        setMovements,
+        balance,
         getIncome,
-        setIncome,
         getExpense,
-        setExpense,
-        getDescription,
-        setDescription,
+        history,
+        addHistory,
+        deleteHistory,
       }}
     >
       {children}

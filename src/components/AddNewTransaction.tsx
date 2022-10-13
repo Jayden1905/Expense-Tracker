@@ -1,36 +1,29 @@
-import { SyntheticEvent, useRef } from "react";
+import { SyntheticEvent, useCallback, useRef } from "react";
 import { useExpenseContext } from "../context/ExpenseContext";
+import { v4 as uuidv4 } from "uuid";
 
 export default function AddNewTranscation() {
-  const { setDescription, setIncome, setExpense } = useExpenseContext();
+  const { setMovements, addHistory } = useExpenseContext();
 
   const descriptionRef = useRef<HTMLInputElement>(null);
-  const valueInputRef = useRef<HTMLInputElement>(null);
+  const amountRef = useRef<HTMLInputElement>(null);
 
-  const submitHandler = (event: SyntheticEvent) => {
+  const onSubmitHandler = (event: SyntheticEvent) => {
     event.preventDefault();
 
     if (
-      descriptionRef.current?.value !== undefined &&
-      valueInputRef.current?.value !== undefined
+      amountRef.current?.value !== undefined &&
+      descriptionRef.current?.value !== undefined
     ) {
-      setDescription(descriptionRef.current?.value);
+      const amount = Number.parseFloat(amountRef.current.value);
+      const description = descriptionRef.current.value;
 
-      const incomeVlaue = valueInputRef.current?.value;
+      setMovements(amount);
 
-      if (incomeVlaue.charAt(0) === "-") {
-        const expenseValue = valueInputRef.current?.value.substring(1);
-        setExpense(Number.parseFloat(expenseValue));
+      addHistory(uuidv4(), amount, description);
 
-        descriptionRef.current.value = "";
-        valueInputRef.current.value = "";
-        return;
-      }
-
-      setIncome(Number.parseFloat(incomeVlaue));
-
+      amountRef.current.value = "";
       descriptionRef.current.value = "";
-      valueInputRef.current.value = "";
     }
   };
 
@@ -38,7 +31,7 @@ export default function AddNewTranscation() {
     <div className="mt-14 w-full h-full">
       <h1 className="text-xl font-semibold mt-4">Add new Transcation</h1>
       <div className="border-bottom w-full h-[1px] bg-black mt-2"></div>
-      <form onSubmit={submitHandler}>
+      <form onSubmit={onSubmitHandler}>
         <div className="description-box mt-6">
           <p className="font-bold">Description</p>
           <input
@@ -52,7 +45,7 @@ export default function AddNewTranscation() {
           <p className="font-bold">Amount</p>
           <p>(negative - expense, positive - income)</p>
           <input
-            ref={valueInputRef}
+            ref={amountRef}
             type="text"
             placeholder="Enter amount..."
             className="w-full bg-white outline-none border-none p-2 mt-2"
